@@ -17,11 +17,11 @@ POLKADOT_PROXY_SEED="your-polkadot-proxy-seed"
 KUSAMA_PROXY_SEED="your-kusama-proxy-seed"
 
 #Step 5: Retrieve VoteCLI file and give permission
-wget -O VoteCLI https://raw.githubusercontent.com/legendnodes/OpenGov/main/VoteCLI.js
-chmod +x VoteCLI
+wget -O voteCLI https://raw.githubusercontent.com/legendnodes/OpenGov/main/voteCLI.js
+chmod +x voteCLI
 
 # Step 6: Run the process
-node VoteCLI
+node voteCLI
 
 
 
