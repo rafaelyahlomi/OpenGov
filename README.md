@@ -12,7 +12,6 @@ The voting process is as follows:
 6) Choose amount of DOT/KSM - note: you can choose the same amount for all referendums
 7) Adding another proxied account and start the process again, or moving on to broadcast the user inputs
   
-
 For safety, it's recommended to use proxy account with minimal amount of tokens only for the transactions fees
-Therefore, user should also have a file to put the seed phrase of both polkadot and kusama proxy account
+
 
