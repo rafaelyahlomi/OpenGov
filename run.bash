@@ -13,6 +13,7 @@ npm install @polkadot/api
 
 # Step 4: Create .env file and store seed-phrase as follow
 sudo nano .env
+
 POLKADOT_PROXY_SEED="your-polkadot-proxy-seed"
 KUSAMA_PROXY_SEED="your-kusama-proxy-seed"
 
