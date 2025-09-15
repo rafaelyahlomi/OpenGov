@@ -1,0 +1,22 @@
+{
+  "polkadot": {
+    "ws": "wss://rpc.polkadot.io",
+    "token": "DOT",
+    "seed_env": "POLKADOT_PROXY_SEED",
+    "_comment": "Amounts are in whole DOT, conviction is multiplier",
+    "addresses": [
+      { "address": "YOUR-POLKADOT-ADDRESS", "amount": 10, "conviction": 1 },
+      { "address": "YOUR-POLKADOT-ADDRESS2", "amount": 10, "conviction": 1 }
+    ]
+  },
+  "kusama": {
+    "ws": "wss://kusama-rpc.polkadot.io",
+    "token": "KSM",
+    "seed_env": "KUSAMA_PROXY_SEED",
+    "_comment": "Amounts are in whole KSM, conviction is multiplier",
+    "addresses": [
+      { "address": "YOUR-KUSAMA-ADDRESS", "amount": 2,  "conviction": 1 },
+      { "address": "YOUR-KUSAMA2-ADDRESS2", "amount": 2,  "conviction": 1 }
+    ]
+  }
+}
