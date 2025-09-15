@@ -1,7 +1,12 @@
 import os
 import time
+
+from flask.cli import load_dotenv
 from substrateinterface import SubstrateInterface, Keypair
 from getpass import getpass
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 
 # --- Fixed configuration ---
 CONFIG = {

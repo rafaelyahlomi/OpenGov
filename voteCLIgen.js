@@ -49,17 +49,28 @@ const getValidatedInput = async (q, fn) => {
     }
 };
 
-// --- Default voting logic ---
+// --- Default voting logic (updated for multiple referendums) ---
 async function defaultVoting(api, cfg, proxyAccount) {
-    const referendum = await ask("Enter referendum index: ");
-    const voteSide = await ask("Vote type (aye/nay): ");
-    const isAye = voteSide.toLowerCase() === "aye";
+    const referendumsInput = await ask("Enter referendum indexes (comma-separated): ");
+    const referendums = referendumsInput.split(",").map(r => r.trim());
+
+    // Ask vote for each referendum
+    const voteSides = {};
+    for (const r of referendums) {
+        const side = await getValidatedInput(
+            `Vote type for referendum ${r} (aye/nay): `,
+            input => ["aye", "nay"].includes(input.toLowerCase())
+        );
+        voteSides[r] = side.toLowerCase() === "aye";
+    }
 
     console.log("\n📋 Voting Plan:");
     cfg.addresses.forEach((addr, i) => {
-        console.log(
-            `- ${addr}: ${isAye ? "AYE" : "NAY"}, ${cfg.amounts[i]} ${cfg.token}, conviction ${cfg.conviction}x`
-        );
+        referendums.forEach(r => {
+            console.log(
+                `- ${addr}: ${voteSides[r] ? "AYE" : "NAY"}, ${cfg.amounts[i]} ${cfg.token}, conviction ${cfg.conviction}x (Referendum ${r})`
+            );
+        });
     });
 
     const confirm = await ask("Do you confirm broadcasting these votes? (y/n): ");
@@ -68,42 +79,45 @@ async function defaultVoting(api, cfg, proxyAccount) {
         process.exit(0);
     }
 
+    // Broadcast votes
     for (let i = 0; i < cfg.addresses.length; i++) {
         const proxiedAccount = cfg.addresses[i];
-        const balancePlancks = BigInt(cfg.amounts[i]) * BigInt(10 ** 12); // DOT/KSM = 12 decimals
+        const balancePlancks = BigInt(cfg.amounts[i]) * BigInt(10 ** 12);
 
-        console.log(`\nVoting ${isAye ? "AYE" : "NAY"} on referendum ${referendum} for ${proxiedAccount}`);
-        console.log(`Locking ${cfg.amounts[i]} ${cfg.token} with conviction ${cfg.conviction}x`);
+        for (const r of referendums) {
+            console.log(`\nVoting ${voteSides[r] ? "AYE" : "NAY"} on referendum ${r} for ${proxiedAccount}`);
+            console.log(`Locking ${cfg.amounts[i]} ${cfg.token} with conviction ${cfg.conviction}x`);
 
-        let voteTx;
-        if (api.tx.democracy?.vote) {
-            voteTx = api.tx.democracy.vote(referendum, { aye: isAye, conviction: `Locked${cfg.conviction}x` });
-        } else if (api.tx.convictionVoting?.vote) {
-            voteTx = api.tx.convictionVoting.vote(referendum, {
-                Standard: {
-                    vote: { aye: isAye, conviction: `Locked${cfg.conviction}x` },
-                    balance: balancePlancks
-                }
+            let voteTx;
+            if (api.tx.democracy?.vote) {
+                voteTx = api.tx.democracy.vote(r, { aye: voteSides[r], conviction: `Locked${cfg.conviction}x` });
+            } else if (api.tx.convictionVoting?.vote) {
+                voteTx = api.tx.convictionVoting.vote(r, {
+                    Standard: {
+                        vote: { aye: voteSides[r], conviction: `Locked${cfg.conviction}x` },
+                        balance: balancePlancks
+                    }
+                });
+            } else {
+                console.error("❌ Voting method not found in the API.");
+                continue;
+            }
+
+            const proxyVote = api.tx.proxy.proxy(proxiedAccount, 'Governance', voteTx);
+
+            await new Promise(resolve => {
+                proxyVote.signAndSend(proxyAccount, ({ status }) => {
+                    console.log(`Transaction status: ${status.type}`);
+                    if (status.isFinalized) {
+                        console.log(`✅ Finalized in block: ${status.asFinalized}`);
+                        resolve();
+                    }
+                });
             });
-        } else {
-            console.error("❌ Voting method not found in the API.");
-            continue;
+
+            console.log("⏳ Waiting 5 seconds before next vote...");
+            await new Promise(res => setTimeout(res, 5000));
         }
-
-        const proxyVote = api.tx.proxy.proxy(proxiedAccount, 'Governance', voteTx);
-
-        await new Promise(resolve => {
-            proxyVote.signAndSend(proxyAccount, ({ status }) => {
-                console.log(`Transaction status: ${status.type}`);
-                if (status.isFinalized) {
-                    console.log(`✅ Finalized in block: ${status.asFinalized}`);
-                    resolve();
-                }
-            });
-        });
-
-        console.log("⏳ Waiting 5 seconds before next vote...");
-        await new Promise(res => setTimeout(res, 5000));
     }
 
     console.log("\n✅ All default votes submitted.");
